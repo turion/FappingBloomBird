@@ -681,15 +681,14 @@ sideNStockToPosNSize HRight y stock = ((gameWidth-stock, y), (stock, obstacleHei
 
 objObstacleFalling :: ObjectName -> HorizSide -> Double -> Double -> ObjectSF
 objObstacleFalling name hside y stock = proc (ObjectInput ci cs os) -> do
-   let v = (0,50)
-   p <- (p0 ^+^) ^<< integral -< v
+   p <- (p0 ^+^) ^<< integral -< obstacleVelocity
    let thinkshesded  = snd p > gameHeight - 50
    let sokillmemaybe = if thinkshesded then Event () else noEvent
    returnA -< ObjectOutput
                 (Object { objectName           = name
                         , objectKind           = Obstacle size
                         , objectPos            = p
-                        , objectVel            = v
+                        , objectVel            = obstacleVelocity
                         , objectAcc            = (0,0)
                         , objectDead           = thinkshesded
                         , objectHit            = False
@@ -699,4 +698,3 @@ objObstacleFalling name hside y stock = proc (ObjectInput ci cs os) -> do
                         })
                 sokillmemaybe 
     where (p0, size) = sideNStockToPosNSize hside y stock
-          

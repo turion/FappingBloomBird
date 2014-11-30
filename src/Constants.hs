@@ -63,3 +63,6 @@ maxVNorm = 500
 obstacleHeight :: Double
 obstacleHeight = 24
 
+obstacleVelocity :: Vel2D
+obstacleVelocity = (0,50)
+
