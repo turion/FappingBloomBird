@@ -14,7 +14,7 @@ import           Control.Concurrent
 import           Control.Monad
 import           Control.Monad.Trans             (liftIO)
 import           Data.Monoid
-import           Data.Text                       (Text)
+import           Data.Text                       (Text, pack)
 import qualified Data.Text.Lazy                  as T
 import qualified Data.Text.Lazy.IO               as TIO
 import           Options.Applicative
@@ -107,13 +107,13 @@ createRefDataRequest ticker = do
         formatSubElement "periodicityAdjustment"  $
             setValue (BT.BlpString "ACTUAL")
         formatSubElement "periodicitySelection"  $
-            setValue (BT.BlpString "MONTHLY")
+            setValue (BT.BlpString "WEEKLY")
         formatSubElement "startDate"  $
             setValue (BT.BlpString "20060101")
         formatSubElement "endDate"  $
-            setValue (BT.BlpString "20121231")
+            setValue (BT.BlpString "20141128")
         formatSubElement "maxDataPoints"  $
-            setValue (BT.BlpInt32 100)
+            setValue (BT.BlpInt32 300)
 
     -- Service refDataService = session.getService("//blp/refdata");
     -- Request request = refDataService.createRequest("HistoricalDataRequest");
@@ -135,25 +135,25 @@ data CmdOptions = CmdOptions {
   cmdPort :: Int
 } deriving (Show)
 
-setupBlpapi :: (MVar [Double], MVar [Double]) -> CmdOptions -> Blpapi ()
-setupBlpapi (m1, m2) c = do
+setupBlpapi :: String -> MVar [Double] -> CmdOptions -> Blpapi ()
+setupBlpapi ticker m1 c = do
   -- m1 <- liftIO newEmptyMVar
   createSession
      (defaultSessionOptions
           {serverAddresses = [ServerAddress (cmdIp c) (cmdPort c)]})
      (defaultHandler m1) >>= throwOnError
-  createRefDataRequest "IBM US Equity"
+  createRefDataRequest (pack ticker)
 
   res1 <- liftIO $! readMVar m1
 
-  -- m2 <- liftIO newEmptyMVar
-  createSession
-     (defaultSessionOptions
-          {serverAddresses = [ServerAddress (cmdIp c) (cmdPort c)]})
-     (defaultHandler m2) >>= throwOnError
-  createRefDataRequest "GOOG US Equity"
-
-  res2 <- liftIO $! readMVar m2
+--  -- m2 <- liftIO newEmptyMVar
+--  createSession
+--     (defaultSessionOptions
+--          {serverAddresses = [ServerAddress (cmdIp c) (cmdPort c)]})
+--     (defaultHandler m2) >>= throwOnError
+--  createRefDataRequest "GOOG US Equity"
+--
+--  res2 <- liftIO $! readMVar m2
 
   return ()
 
@@ -171,7 +171,7 @@ cmdLineParser = CmdOptions <$> ipParser <*> portParser
         <> metavar "IP"
         <> help "server name or IP"
 
-runBloombergRequest :: (MVar [Double], MVar [Double]) -> IO ()
-runBloombergRequest mvars = do
+runBloombergRequest :: String -> MVar [Double] -> IO ()
+runBloombergRequest ticker mvar = do
   cmd <- execParser (info (helper <*> cmdLineParser) mempty)
-  runBlpapi $ setupBlpapi mvars cmd
+  runBlpapi $ setupBlpapi ticker mvar cmd

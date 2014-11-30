@@ -16,16 +16,17 @@ main = do
 
   initializeDisplay
   ibmStockMVar <- newEmptyMVar 
-  msStockMVar  <- newEmptyMVar 
+  -- googStockMVar  <- newEmptyMVar 
 
   print "calling bloomberg"
-  forkIO $ runBloombergRequest (ibmStockMVar, msStockMVar) -- obtainIBMStock
+  forkIO $ runBloombergRequest "IBM US Equity" ibmStockMVar
+  -- forkIO $ runBloombergRequest "GOOG US Equity" googStockMVar
 
   print "Waiting for bloomberg"
   ibmStock <- takeMVar ibmStockMVar
   print "Got ibm stock"
-  -- msStock <- takeMVar msStockMVar
-  print "Got msft stock"
+  -- googStock <- takeMVar googStockMVar
+  -- print "Got goog stock"
 
   timeRef       <- initializeTimeRef
   controllerRef <- initializeInputDevices
@@ -42,6 +43,3 @@ main = do
                (\_ e -> render res' e >> return False)
                (wholeGame $ zip ibmStock ibmStock)
  
-
--- ibmStock = [(100.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5)]
--- msStock  = [(100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5)]

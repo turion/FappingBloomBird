@@ -64,5 +64,5 @@ obstacleHeight :: Double
 obstacleHeight = 24
 
 obstacleVelocity :: Vel2D
-obstacleVelocity = (0,50)
+obstacleVelocity = (0,200)
 
