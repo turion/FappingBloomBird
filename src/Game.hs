@@ -123,7 +123,7 @@ gameFinished = arr $ const $
 -- Load the first level.
 --
 gameAlive :: Bars -> SF Controller GameState
-gameAlive bars = runLevel stdLives initialLevel 0
+gameAlive bars = runLevel bars stdLives initialLevel 0
   -- loadLevel stdLives initialLevel loadingDelay
   -- (gameWithLives stdLives initialLevel)
 
@@ -132,9 +132,9 @@ gameAlive bars = runLevel stdLives initialLevel 0
 -- | Set the game state as loading for a few seconds, then start the actual
 -- game. Uses 'loadLevel', passing the game SF ('gameWithLives') as
 -- continuation.
-runLevel :: Int -> Int -> Int -> SF Controller GameState
-runLevel lives level pts = loadLevel lives level pts loadingDelay
- (gameWithLives lives level pts)
+runLevel :: Bars -> Int -> Int -> Int -> SF Controller GameState
+runLevel bars lives level pts = loadLevel lives level pts loadingDelay
+ (gameWithLives bars lives level pts)
 
 -- | Unconditionally output the game in loading state ('levelLoading') for some
 -- time, and then ('after') switch over to the given continuation.
@@ -167,16 +167,16 @@ levelLoading lvs lvl pts = arr $ const $
 -- Conditions like finishing the game or running out of lives are
 -- detected in 'wholeGame' and 'canLose', respectively.
 --
-gameWithLives :: Int -> Int -> Int -> SF Controller GameState
-gameWithLives numLives level pts = dSwitch
+gameWithLives :: Bars -> Int -> Int -> Int -> SF Controller GameState
+gameWithLives bars numLives level pts = dSwitch
   -- Run normal game until level is completed
-  (gamePlayOrPause numLives level pts >>> (arr id &&& isLevelCompleted))
+  (gamePlayOrPause bars numLives level pts >>> (arr id &&& isLevelCompleted))
 
   -- Take last game state, extract basic info, and load the next level
   (\g -> let level' = level + 1
              lives' = gameLives  $ gameInfo g
              pts    = gamePoints $ gameInfo g
-         in runLevel lives' level' pts)
+         in runLevel bars lives' level' pts)
 
 -- | Detect if the level is completed (ie. if there are no more blocks).
 isLevelCompleted :: SF GameState (Event GameState)
@@ -192,8 +192,8 @@ isLevelCompleted = proc (s) -> do
 -- NOTE: The code includes a commented piece that detects
 -- a request to pause the game. Check out the code to learn how to
 -- implement pausing.
-gamePlayOrPause :: Int -> Int -> Int -> SF Controller GameState
-gamePlayOrPause lives level pts = gamePlay lives level pts
+gamePlayOrPause :: Bars -> Int -> Int -> Int -> SF Controller GameState
+gamePlayOrPause bars lives level pts = gamePlay bars lives level pts
 --  ((arr id) &&& (pause undefined (False --> isPaused) (mainLoop lives level)))
 --  >>> pauseGeneral
 --
@@ -213,9 +213,9 @@ gamePlayOrPause lives level pts = gamePlay lives level pts
 -- | Run the game, obtain the internal game's running state, and compose it
 -- with the more general 'GameState' using the known number of lives and
 -- points.
-gamePlay :: Int -> Int -> Int -> SF Controller GameState
-gamePlay lives level pts =
-  gamePlay' (initialObjects level) >>> composeGameState lives level pts
+gamePlay :: Bars -> Int -> Int -> Int -> SF Controller GameState
+gamePlay bars lives level pts =
+  gamePlay' (initialObjects bars level) >>> composeGameState lives level pts
 
 -- | Based on the internal gameplay info, compose the main game state and
 -- detect when a live is lost. When that happens, restart this SF
@@ -334,8 +334,8 @@ gamePlay' objs = loopPre ([],[],0) $
 -- * Game objects
 --
 -- | Objects initially present: the walls, the ball, the paddle and the blocks.
-initialObjects :: Int -> ObjectSFs
-initialObjects level = listToIL $
+initialObjects :: Bars -> Int -> ObjectSFs
+initialObjects bars level = listToIL $
     [ objSideRight 
     , objSideTop
     , objSideLeft
@@ -669,20 +669,20 @@ objObstacle name pos = proc (ObjectInput ci cs os) -> do
                         })
                 noEvent
 
-objObstacleDebug1 = objObstacleFalling "bar" HLeft 150
-objObstacleDebug2 = objObstacleFalling "bar" HRight 150
+objObstacleDebug1 = objObstacleFalling "bar" HLeft  0.0 150
+objObstacleDebug2 = objObstacleFalling "bar" HRight 100.0 150
 
 data HorizSide = HLeft | HRight
 
 flyThroughSize = 300
 obstacleHeight = 24
 
-sideNStockToPosNSize :: HorizSide -> Double -> (Pos2D, Size2D)
-sideNStockToPosNSize HLeft stock = ((0, 0), (stock, obstacleHeight))
-sideNStockToPosNSize HRight stock = ((flyThroughSize+stock, 0), (gameWidth-(flyThroughSize+stock), obstacleHeight))
+sideNStockToPosNSize :: HorizSide -> Double -> Double -> (Pos2D, Size2D)
+sideNStockToPosNSize HLeft  y stock = ((0, y), (stock, obstacleHeight))
+sideNStockToPosNSize HRight y stock = ((gameWidth-stock, y), (stock, obstacleHeight))
 
-objObstacleFalling :: ObjectName -> HorizSide -> Double -> ObjectSF
-objObstacleFalling name hside stock = proc (ObjectInput ci cs os) -> do
+objObstacleFalling :: ObjectName -> HorizSide -> Double -> Double -> ObjectSF
+objObstacleFalling name hside y stock = proc (ObjectInput ci cs os) -> do
    let v = (0,50)
    p <- (p0 ^+^) ^<< integral -< v
    let thinkshesded  = snd p > gameHeight - 50
@@ -700,5 +700,5 @@ objObstacleFalling name hside stock = proc (ObjectInput ci cs os) -> do
                         , displacedOnCollision = False
                         })
                 sokillmemaybe 
-    where (p0, size) = sideNStockToPosNSize hside stock
+    where (p0, size) = sideNStockToPosNSize hside y stock
           
