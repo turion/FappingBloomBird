@@ -60,3 +60,6 @@ maxVNorm = 500
 -- 
 -- wonDelay :: Time
 -- wonDelay = 3
+obstacleHeight :: Double
+obstacleHeight = 24
+

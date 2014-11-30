@@ -674,8 +674,6 @@ objObstacleDebug2 = objObstacleFalling "bar" HRight 100.0 150
 
 data HorizSide = HLeft | HRight
 
-flyThroughSize = 300
-obstacleHeight = 24
 
 sideNStockToPosNSize :: HorizSide -> Double -> Double -> (Pos2D, Size2D)
 sideNStockToPosNSize HLeft  y stock = ((0, y), (stock, obstacleHeight))
