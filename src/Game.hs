@@ -354,7 +354,11 @@ initialObjects bars level = listToIL $
                 , let nm = "barR" ++ show i
                 ]
         obstacleSep = 20
-        (lbars,rbars) = unzip bars
+        (lbars,rbars) = (normalisedbars lstocks, normalisedbars rstocks)
+        (lstocks,rstocks) = unzip bars
+        normalisedbars stocks = map (\stock -> (stock - mini) / (maxi - mini) * 100 + 20) stocks
+    where mini = minimum stocks
+          maxi = maximum stocks)
 
 -- *** Ball
 
