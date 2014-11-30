@@ -36,10 +36,11 @@ type Objects   = [Object]
 --
 -- TODO: Use a GADT to separate these properties in two types and guarantee a
 -- proper correspondence in 'Object'.
-data ObjectKind = Ball    Double -- radius?
-                | Paddle  Size2D 
-                | Block   Energy Size2D
-                | Side    Side
+data ObjectKind = Ball     Double -- radius?
+                | Paddle   Size2D 
+                | Block    Energy Size2D
+                | Side     Side
+                | Obstacle Size2D
   deriving (Show,Eq)
 
 type Energy = Int
@@ -59,10 +60,11 @@ isPaddle o = case objectKind o of
 
 objShape :: Object -> Shape
 objShape obj = case objectKind obj of
-  (Ball r)    -> Rectangle (p ^-^ (r,r)) (2*r, 2*r)
-  (Paddle s)  -> Rectangle p s
-  (Block _ s) -> Rectangle p s
-  (Side   s)  -> sideToShape p s
+  (Ball r)       -> Rectangle (p ^-^ (r,r)) (2*r, 2*r)
+  (Paddle s)     -> Rectangle p s
+  (Block _ s)    -> Rectangle p s
+  (Side   s   )  -> sideToShape p s
+  (Obstacle s)   -> Rectangle p s
  where p = objectPos obj
        width'  = gameWidth
        height' = gameHeight
