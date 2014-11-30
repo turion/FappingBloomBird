@@ -121,5 +121,5 @@ inCollisionWith :: ObjectName -> ObjectName -> Collisions -> Bool
 inCollisionWith nm1 nm2 cs = any (both nm1 nm2) cs
     where
         both nm1 nm2 (Collision nmvs) =
-            any ((== nm1) . fst) nmvs
-            && any ((== nm2) . fst) nmvs
+            any ((isPrefixOf nm1) . fst) nmvs
+            && any ((isPrefixOf nm2) . fst) nmvs

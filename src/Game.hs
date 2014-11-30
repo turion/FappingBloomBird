@@ -83,12 +83,18 @@ outOfBars = constant noEvent
 canLose :: Bars -> SF Controller GameState
 canLose bars = switch
    -- retart normal behaviour every time I'm out of lives
-   (gameAlive bars >>> (arr id &&& outOfLives))
+   (gameAlive bars >>> (arr id &&& lostALife ))
    (\_ -> restartGame bars)
 
 -- | Detect when the last life is lost.
 outOfLives :: SF GameState (Event ())
 outOfLives = arr ((< 0) . gameLives . gameInfo) >>> edge
+
+lostALife :: SF GameState (Event ())
+lostALife = loopPre (3) $ proc (g, o) -> do
+  smaller <- arr (uncurry (<)) -< (gameLives $ gameInfo g, o)
+  let e = if smaller then Event () else noEvent
+  returnA -< (e, gameLives $ gameInfo g)
 
 -- | The game state is over for 3 seconds, then the game is run again
 -- ('wholeGame').
@@ -280,7 +286,7 @@ gamePlay' objs = loopPre ([],[],0) $
        -- Detect collisions between the ball and the bottom
        -- which are the only ones that matter outside gamePlay'
        composeOutput = proc ((x,y),z) -> do
-         y' <- collisionWithBottom -< y
+         y' <- collisionWithBars -< y
          returnA -< (x,y',z)
 
        -- Just reorder the input
@@ -335,7 +341,7 @@ initialObjects level = listToIL $
     , objSideLeft
     , objSideBottom
     , objPaddle   
-    , objBall
+    -- , objBall
     , objObstacleDebug1
     , objObstacleDebug2
     ]
@@ -349,32 +355,32 @@ initialObjects level = listToIL $
 -- ('followPaddleDetectLaunch'), then switches ('switch') over to start
 -- bounding around, until it hits the floor ('bounceAroundDetectMiss').
 --
-objBall :: ObjectSF
-objBall = switch followPaddleDetectLaunch   $ \p -> 
-          switch (bounceAroundDetectMiss p) $ \_ ->
-          objBall
-    where
-        -- Yampa's edge is used to turn the continuous
-        -- signal produced by controllerClick into an
-        -- event-carrying signal, only true the instant
-        -- the mouse button is clicked.
-        followPaddleDetectLaunch = proc oi -> do
-            o     <- followPaddle -< oi
-            click <- edge         -< controllerClick (userInput oi) 
-            returnA -< (o, click `tag` (objectPos (outputObject o)))
-
-        bounceAroundDetectMiss p = proc oi -> do
-            o    <- bouncingBall p initialBallVel -< oi
-            miss <- collisionWithBottom           -< collisions oi
-            returnA -< (o, miss) 
+--objBall :: ObjectSF
+--objBall = switch followPaddleDetectLaunch   $ \p -> 
+--          switch (bounceAroundDetectMiss p) $ \_ ->
+--          objBall
+--    where
+--        -- Yampa's edge is used to turn the continuous
+--        -- signal produced by controllerClick into an
+--        -- event-carrying signal, only true the instant
+--        -- the mouse button is clicked.
+--        followPaddleDetectLaunch = proc oi -> do
+--            o     <- followPaddle -< oi
+--            click <- edge         -< controllerClick (userInput oi) 
+--            returnA -< (o, click `tag` (objectPos (outputObject o)))
+--
+--        bounceAroundDetectMiss p = proc oi -> do
+--            o    <- bouncingBall p initialBallVel -< oi
+--            miss <- collisionWithBottom           -< collisions oi
+--            returnA -< (o, miss) 
 
 -- | Fires an event when the ball *enters in* a collision with the
 -- bottom wall.
 --
 -- NOTE: even if the overlap is not corrected, 'edge' makes
 -- the event only take place once per collision.
-collisionWithBottom :: SF Collisions (Event ())
-collisionWithBottom = inCollisionWith "ball" "bottomWall" ^>> edge
+collisionWithBars :: SF Collisions (Event ())
+collisionWithBars = inCollisionWith "paddle" "bar" ^>> edge
 
 -- | Ball follows the paddle if there is one, and it's out of the screen
 -- otherwise). To avoid reacting to collisions, this ball is non-interactive.
@@ -663,8 +669,8 @@ objObstacle name pos = proc (ObjectInput ci cs os) -> do
                         })
                 noEvent
 
-objObstacleDebug1 = objObstacleFalling "Obstacle" HLeft 150
-objObstacleDebug2 = objObstacleFalling "Obstacle" HRight 150
+objObstacleDebug1 = objObstacleFalling "bar" HLeft 150
+objObstacleDebug2 = objObstacleFalling "bar" HRight 150
 
 data HorizSide = HLeft | HRight
 
