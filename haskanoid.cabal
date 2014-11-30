@@ -71,6 +71,7 @@ executable haskanoid
 
   -- Modules included in this executable, other than Main.
   other-modules: Audio
+                 BloombergProvider
                  Constants
                  Control.Extra.Monad
                  Data.Extra.List
@@ -100,7 +101,10 @@ executable haskanoid
                        MissingH,
                        Yampa >= 0.9.6 && < 0.10,
                        SDL, SDL-image, SDL-mixer, SDL-ttf,
-                       IfElse
+                       IfElse,
+                       optparse-applicative >= 0.8 && <= 0.9,
+                       text, blpapi
+  default-language: Haskell2010
 
   if flag(wiimote)
     build-depends: hcwiid

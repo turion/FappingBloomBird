@@ -6,15 +6,22 @@ import Game
 import Display
 import Input
 import Graphics.UI.Extra.SDL
+import BloombergProvider
+import Finance.Blpapi.Session
+import Control.Concurrent
 
 -- TODO: Use MaybeT or ErrorT to report errors
 main :: IO ()
 main = do
 
   initializeDisplay
+  ibmStockMVar <- newEmptyMVar 
+  msStockMVar  <- newEmptyMVar 
 
-  ibmStock <- return ibmStock -- obtainIBMStock
-  msStock  <- return msStock --  obtainMSStock
+  forkIO $ runBloombergRequest (ibmStockMVar, msStockMVar) -- obtainIBMStock
+  ibmStock <- takeMVar ibmStockMVar
+  msStock <- takeMVar msStockMVar
+  -- msStock  <- return msStock --  obtainMSStock
 
   timeRef       <- initializeTimeRef
   controllerRef <- initializeInputDevices
@@ -32,5 +39,5 @@ main = do
                (wholeGame $ zip ibmStock msStock)
  
 
-ibmStock = []
-msStock  = []
+ibmStock = [(100.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5)]
+msStock  = [(100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5), (150.5), (100.5)]

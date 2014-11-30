@@ -60,7 +60,7 @@ import Levels
 import Objects
 import ObjectSF
 
-type Bars = [(Float,Float)]
+type Bars = [(Double,Double)]
 
 -- * General state transitions
 
@@ -341,11 +341,20 @@ initialObjects bars level = listToIL $
     , objSideLeft
     , objSideBottom
     , objPaddle   
-    -- , objBall
-    , objObstacleDebug1
-    , objObstacleDebug2
     ]
-    ++ map (\p -> objBlockAt p (blockWidth, blockHeight)) (blockPoss $ levels!!level)
+    ++ robjs
+    ++ lobjs
+    -- ++ map (\p -> objBlockAt p (blockWidth, blockHeight)) (blockPoss $ levels!!level)
+  where lobjs = [ objObstacleFalling nm HLeft (gameHeight - fromIntegral i * (obstacleHeight + obstacleSep)) stock
+                | (i, stock) <- zip [1..] lbars
+                , let nm = "barL" ++ show i
+                ]
+        robjs = [ objObstacleFalling nm HRight (gameHeight - fromIntegral i * (obstacleHeight + obstacleSep)) stock
+                | (i, stock) <- zip [1..] rbars
+                , let nm = "barR" ++ show i
+                ]
+        obstacleSep = 20
+        (lbars,rbars) = unzip bars
 
 -- *** Ball
 
@@ -652,28 +661,10 @@ objWall name side pos = proc (ObjectInput ci cs os) -> do
                         })
                 noEvent
 
--- | Builds an obstacle racing down from the top
-objObstacle :: ObjectName -> Pos2D -> ObjectSF
-objObstacle name pos = proc (ObjectInput ci cs os) -> do
-   returnA -< ObjectOutput
-                (Object { objectName           = name
-                        , objectKind           = Obstacle (24, 104)
-                        , objectPos            = pos -- fix for right side!
-                        , objectVel            = (0,-1)
-                        , objectAcc            = (0,0)
-                        , objectDead           = False
-                        , objectHit            = False
-                        , canCauseCollisions   = True
-                        , collisionEnergy      = 0
-                        , displacedOnCollision = False
-                        })
-                noEvent
-
-objObstacleDebug1 = objObstacleFalling "bar" HLeft  0.0 150
-objObstacleDebug2 = objObstacleFalling "bar" HRight 100.0 150
+--objObstacleDebug1 = objObstacleFalling "bar" HLeft  0.0 150
+--objObstacleDebug2 = objObstacleFalling "bar" HRight 100.0 150
 
 data HorizSide = HLeft | HRight
-
 
 sideNStockToPosNSize :: HorizSide -> Double -> Double -> (Pos2D, Size2D)
 sideNStockToPosNSize HLeft  y stock = ((0, y), (stock, obstacleHeight))
@@ -692,7 +683,7 @@ objObstacleFalling name hside y stock = proc (ObjectInput ci cs os) -> do
                         , objectAcc            = (0,0)
                         , objectDead           = thinkshesded
                         , objectHit            = False
-                        , canCauseCollisions   = True
+                        , canCauseCollisions   = False
                         , collisionEnergy      = 0
                         , displacedOnCollision = False
                         })
