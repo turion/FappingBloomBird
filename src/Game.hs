@@ -336,6 +336,8 @@ initialObjects level = listToIL $
     , objSideBottom
     , objPaddle   
     , objBall
+    , objObstacleDebug1
+    , objObstacleDebug2
     ]
     ++ map (\p -> objBlockAt p (blockWidth, blockHeight)) (blockPoss $ levels!!level)
 
@@ -643,3 +645,54 @@ objWall name side pos = proc (ObjectInput ci cs os) -> do
                         , displacedOnCollision = False
                         })
                 noEvent
+
+-- | Builds an obstacle racing down from the top
+objObstacle :: ObjectName -> Pos2D -> ObjectSF
+objObstacle name pos = proc (ObjectInput ci cs os) -> do
+   returnA -< ObjectOutput
+                (Object { objectName           = name
+                        , objectKind           = Obstacle (24, 104)
+                        , objectPos            = pos -- fix for right side!
+                        , objectVel            = (0,-1)
+                        , objectAcc            = (0,0)
+                        , objectDead           = False
+                        , objectHit            = False
+                        , canCauseCollisions   = True
+                        , collisionEnergy      = 0
+                        , displacedOnCollision = False
+                        })
+                noEvent
+
+objObstacleDebug1 = objObstacleFalling "Obstacle" HLeft 150
+objObstacleDebug2 = objObstacleFalling "Obstacle" HRight 150
+
+data HorizSide = HLeft | HRight
+
+flyThroughSize = 300
+obstacleHeight = 24
+
+sideNStockToPosNSize :: HorizSide -> Double -> (Pos2D, Size2D)
+sideNStockToPosNSize HLeft stock = ((0, 0), (stock, obstacleHeight))
+sideNStockToPosNSize HRight stock = ((flyThroughSize+stock, 0), (gameWidth-(flyThroughSize+stock), obstacleHeight))
+
+objObstacleFalling :: ObjectName -> HorizSide -> Double -> ObjectSF
+objObstacleFalling name hside stock = proc (ObjectInput ci cs os) -> do
+   let v = (0,50)
+   p <- (p0 ^+^) ^<< integral -< v
+   let thinkshesded  = snd p > gameHeight - 50
+   let sokillmemaybe = if thinkshesded then Event () else noEvent
+   returnA -< ObjectOutput
+                (Object { objectName           = name
+                        , objectKind           = Obstacle size
+                        , objectPos            = p
+                        , objectVel            = v
+                        , objectAcc            = (0,0)
+                        , objectDead           = thinkshesded
+                        , objectHit            = False
+                        , canCauseCollisions   = True
+                        , collisionEnergy      = 0
+                        , displacedOnCollision = False
+                        })
+                sokillmemaybe 
+    where (p0, size) = sideNStockToPosNSize hside stock
+          

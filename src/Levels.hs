@@ -67,16 +67,16 @@ blockPosS 0 = map (adjustHPos *** adjustVPos) allBlocks
        adjustVPos = (topMargin +) . ((blockHeight + blockSeparation) *)
 
        blockRows :: Num a => a
-       blockRows = 4
+       blockRows = 1
 
        -- Fit as many as possible
        blockColumns :: Num a => a
-       blockColumns =
-         1 + round' ((gameWidth - blockWidth - 2 * leftMargin) / (blockWidth + blockSeparation))
-        where round' = fromIntegral . floor
+       blockColumns = 1
+--          1 + round' ((gameWidth - blockWidth - 2 * leftMargin) / (blockWidth + blockSeparation))
+--         where round' = fromIntegral . floor
 
        leftMargin :: Num a => a
-       leftMargin = 25
+       leftMargin = 500
 
        topMargin :: Num a => a
        topMargin = 10
