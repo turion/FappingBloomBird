@@ -13,6 +13,9 @@ main = do
 
   initializeDisplay
 
+  ibmStock <- return ibmStock -- obtainIBMStock
+  msStock  <- return msStock --  obtainMSStock
+
   timeRef       <- initializeTimeRef
   controllerRef <- initializeInputDevices
   res           <- loadResources
@@ -26,5 +29,8 @@ main = do
                   return (dtSecs, Just mInput)
                )
                (\_ e -> render res' e >> return False)
-               wholeGame
+               (wholeGame $ zip ibmStock msStock)
  
+
+ibmStock = []
+msStock  = []

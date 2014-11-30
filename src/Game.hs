@@ -60,28 +60,31 @@ import Levels
 import Objects
 import ObjectSF
 
+type Bars = [(Float,Float)]
+
 -- * General state transitions
 
 -- | Run the game that the player can lose at ('canLose'), until ('switch')
 -- there are no more levels ('outOfLevels'), in which case the player has won
 -- ('wonGame').
-wholeGame :: SF Controller GameState
-wholeGame = switch
+wholeGame :: Bars -> SF Controller GameState
+wholeGame bars = switch
    -- restart normal behaviour every time I'm out of lives
-   (canLose >>> (arr id &&& outOfLevels))
-   (\_ -> wonGame)
+   (canLose bars >>> (arr id &&& outOfBars))
+   (\_ -> wonGame bars)
 
 -- | Detect when the last level is finished.
-outOfLevels :: SF GameState (Event ())
-outOfLevels = arr ((>= numLevels) . gameLevel . gameInfo) >>> edge
+outOfBars :: SF GameState (Event ())
+outOfBars = constant noEvent
+ -- arr (length . fst . bars . gameLevel . gameInfo) >>> edge
 
 -- | Run the game in which the player is alive, until she runs out of lives
 -- ('outOfLives'), in which case the game must be restarted ('restartGame').
-canLose :: SF Controller GameState
-canLose = switch
+canLose :: Bars -> SF Controller GameState
+canLose bars = switch
    -- retart normal behaviour every time I'm out of lives
-   (gameAlive >>> (arr id &&& outOfLives))
-   (\_ -> restartGame)
+   (gameAlive bars >>> (arr id &&& outOfLives))
+   (\_ -> restartGame bars)
 
 -- | Detect when the last life is lost.
 outOfLives :: SF GameState (Event ())
@@ -89,9 +92,9 @@ outOfLives = arr ((< 0) . gameLives . gameInfo) >>> edge
 
 -- | The game state is over for 3 seconds, then the game is run again
 -- ('wholeGame').
-restartGame :: SF Controller GameState
-restartGame = switch
-  (gameOver &&& after 3 ()) (\_ -> wholeGame)
+restartGame :: Bars -> SF Controller GameState
+restartGame bars = switch
+  (gameOver &&& after 3 ()) (\_ -> wholeGame bars)
 
 -- | Produces a neutral 'GameOver' 'GameState'.
 gameOver :: SF a GameState
@@ -100,9 +103,9 @@ gameOver = arr $ const $
 
 -- | The game state is finished for 4 seconds, then the game is run again
 -- ('wholeGame').
-wonGame :: SF Controller GameState
-wonGame = switch
-  (gameFinished &&& after 4 ()) (\_ -> wholeGame)
+wonGame :: Bars -> SF Controller GameState
+wonGame bars = switch
+  (gameFinished &&& after 4 ()) (\_ -> wholeGame bars)
 
 -- | Produces a neutral 'GameFinished' 'GameState'.
 gameFinished :: SF a GameState
@@ -113,8 +116,8 @@ gameFinished = arr $ const $
 --
 -- Load the first level.
 --
-gameAlive :: SF Controller GameState
-gameAlive = runLevel stdLives initialLevel 0
+gameAlive :: Bars -> SF Controller GameState
+gameAlive bars = runLevel stdLives initialLevel 0
   -- loadLevel stdLives initialLevel loadingDelay
   -- (gameWithLives stdLives initialLevel)
 
